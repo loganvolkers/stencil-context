@@ -1,4 +1,7 @@
-import { Component, Event, EventEmitter, Prop, State } from '@stencil/core';
+import { Component, Event, Element, EventEmitter, Prop, State } from '@stencil/core';
+
+import { context } from '../../shared';
+import { ContextListener } from 'dom-context';
 
 @Component({
   tag: 'stencil-consumer',
@@ -6,27 +9,25 @@ import { Component, Event, EventEmitter, Prop, State } from '@stencil/core';
 export class StencilConsumer {
   @Prop() renderer: any;
   @State() context: any;
-  @Event({ eventName: 'mountConsumer' }) mountEmitter: EventEmitter;
-  @State() promise: Promise<any>;
+  @Element() element:HTMLElement;
   @State() resolvePromise: any;
 
+  listener:ContextListener<Record<string,any>>
+
   constructor() {
-    this.promise = new Promise((resolve) => {
-      this.resolvePromise = resolve;
+    this.listener = new context.Listener({
+      element: this.element,
+      onChange: (next)=>this.context=next,
+      onStatus: ()=>{}
     });
   }
 
-  setContext = async (context: any) => {
-    this.context = context;
-    return this.promise;
-  };
-
   componentWillLoad() {
-    this.mountEmitter.emit(this.setContext);
+    this.listener.start()
   }
 
   componentDidUnload() {
-    this.resolvePromise();
+    this.listener.stop()
   }
 
   render() {

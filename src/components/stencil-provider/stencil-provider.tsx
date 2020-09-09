@@ -1,5 +1,6 @@
 import {
   Component,
+  Element,
   Event,
   EventEmitter,
   h,
@@ -8,6 +9,9 @@ import {
   State,
   Watch,
 } from '@stencil/core';
+
+import { context } from '../../shared';
+import { ContextProvider } from 'dom-context';
 
 interface ConsumerEvent extends Event {
   detail: Function;
@@ -18,28 +22,27 @@ interface ConsumerEvent extends Event {
 })
 export class StencilProvider {
   @Prop() STENCIL_CONTEXT: { [key: string]: any };
-  @State() consumers: Function[] = [];
-
   @Watch('STENCIL_CONTEXT')
   watchContext(newContext) {
-    this.consumers.forEach((consumer) => consumer(newContext));
+    this.provider.context = newContext;
   }
-  @Event({ eventName: 'mountConsumer' }) mountEmitter: EventEmitter;
+  @Element()
+  element: HTMLElement;
 
-  @Listen('mountConsumer')
-  async mountConsumer(event: ConsumerEvent) {
-    event.stopPropagation();
-    this.consumers = this.consumers.slice().concat([event.detail]);
-    await event.detail(this.STENCIL_CONTEXT);
-    const index = this.consumers.indexOf(event.detail);
-    const newConsumers = this.consumers
-      .slice(0, index)
-      .concat(this.consumers.slice(index + 1, this.consumers.length));
-    this.consumers = newConsumers;
+  provider: ContextProvider<Record<string, any>>;
+
+  
+  componentWillLoad() {
+    this.provider = new context.Provider({
+      element: this.element,
+      initialState: this.STENCIL_CONTEXT,
+    });
+
+    this.provider.start();
   }
 
   componentDidUnload() {
-    this.consumers.map((consumer) => this.mountEmitter.emit(consumer));
+    this.provider && this.provider.stop();
   }
 
   render() {

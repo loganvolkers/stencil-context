@@ -67,12 +67,10 @@ declare namespace LocalJSX {
   interface MyComponentChild {}
   interface MyComponentGrandchild {}
   interface StencilConsumer {
-    'onMountConsumer'?: (event: CustomEvent<any>) => void;
     'renderer'?: any;
   }
   interface StencilProvider {
     'STENCIL_CONTEXT'?: { [key: string]: any };
-    'onMountConsumer'?: (event: CustomEvent<any>) => void;
   }
 
   interface IntrinsicElements {
